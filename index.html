@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>นับต้นยาง | ตัวช่วยวางแผนสวนยางพารา</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+  :root{
+    --latex-cream:#F1E9D8;
+    --bark-brown:#2E2418;
+    --leaf-deep:#1F3D2B;
+    --leaf-mid:#3C6B47;
+    --leaf-bright:#7FA85C;
+    --clay:#B5532C;
+    --clay-deep:#8C3D1F;
+    --paper:#FBF7EE;
+    --line:#D8CBAE;
+    --ink:#23201A;
+    --ink-soft:#5C5444;
+    --shadow: rgba(46,36,24,0.18);
+  }
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    background:var(--latex-cream);
+    background-image:
+      radial-gradient(circle at 10% 5%, rgba(127,168,92,0.18), transparent 40%),
+      radial-gradient(circle at 90% 0%, rgba(181,83,44,0.10), transparent 45%);
+    color:var(--ink);
+    font-family:'IBM Plex Sans Thai', sans-serif;
+    min-height:100vh;
+    padding-bottom:40px;
+  }
+
+  .wrap{max-width:520px; margin:0 auto; padding:0 16px;}
+
+  /* ===== Header ===== */
+  header{
+    padding:28px 16px 20px;
+    max-width:520px;
+    margin:0 auto;
+    position:relative;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--leaf-deep);
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .eyebrow::before{
+    content:'';
+    width:7px; height:7px; border-radius:50%;
+    background:var(--clay);
+    display:inline-block;
+  }
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:32px;
+    line-height:1.15;
+    margin:10px 0 6px;
+    color:var(--bark-brown);
+    letter-spacing:-0.01em;
+  }
+  .sub{
+    font-size:14px;
+    color:var(--ink-soft);
+    line-height:1.6;
+    max-width:90%;
+  }
+
+  /* tapping line motif - like rubber tree bark cuts */
+  .tap-line{
+    position:absolute;
+    top:0; right:16px;
+    width:46px; height:64px;
+    opacity:0.5;
+  }
+
+  /* ===== Section card ===== */
+  .card{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:20px 18px;
+    margin-bottom:16px;
+    box-shadow:0 1px 0 rgba(255,255,255,0.6) inset, 0 8px 20px -14px var(--shadow);
+  }
+  .card-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom:14px;
+  }
+  .card-title{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:18px;
+    color:var(--bark-brown);
+  }
+  .card-tag{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:0.06em;
+    color:var(--leaf-mid);
+    background:rgba(63,107,71,0.10);
+    padding:3px 8px;
+    border-radius:20px;
+  }
+
+  /* ===== Map ===== */
+  #map{
+    width:100%;
+    height:300px;
+    border-radius:12px;
+    background:#E7E0CC;
+    border:1px solid var(--line);
+  }
+  .map-toolbar{
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+    flex-wrap:wrap;
+  }
+  .btn{
+    font-family:'IBM Plex Sans Thai', sans-serif;
+    font-size:13px;
+    font-weight:600;
+    padding:10px 14px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    background:#fff;
+    color:var(--ink);
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    transition:transform .12s ease, box-shadow .12s ease;
+    user-select:none;
+  }
+  .btn:active{transform:scale(0.96);}
+  .btn-primary{
+    background:var(--leaf-deep);
+    color:var(--paper);
+    border-color:var(--leaf-deep);
+  }
+  .btn-clay{
+    background:var(--clay);
+    color:#fff;
+    border-color:var(--clay);
+  }
+  .btn-ghost{
+    background:transparent;
+  }
+  .btn-sm{padding:7px 10px; font-size:12px;}
+  .btn[disabled]{opacity:0.45; pointer-events:none;}
+
+  .helper-text{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin-top:8px;
+    line-height:1.5;
+  }
+  .area-readout{
+    margin-top:10px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    color:var(--leaf-deep);
+    background:rgba(63,107,71,0.08);
+    border-radius:10px;
+    padding:8px 12px;
+  }
+
+  /* API key field */
+  .apikey-row{
+    display:flex;
+    gap:8px;
+  }
+  input[type="text"], input[type="password"], input[type="number"]{
+    width:100%;
+    font-family:'IBM Plex Sans Thai', sans-serif;
+    font-size:14px;
+    padding:11px 12px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    background:#fff;
+    color:var(--ink);
+    outline:none;
+  }
+  input:focus{
+    border-color:var(--leaf-mid);
+    box-shadow:0 0 0 3px rgba(63,107,71,0.15);
+  }
+
+  /* ===== Form grid ===== */
+  .field{margin-bottom:14px;}
+  .field label{
+    display:block;
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--bark-brown);
+    margin-bottom:6px;
+  }
+  .field .unit{
+    font-family:'IBM Plex Mono', monospace;
+    color:var(--ink-soft);
+    font-size:11.5px;
+    margin-left:6px;
+    font-weight:400;
+  }
+  .grid-2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+  }
+
+  /* formula toggle */
+  .formula-toggle{
+    display:flex;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:3px;
+    margin-bottom:14px;
+  }
+  .formula-toggle button{
+    flex:1;
+    border:none;
+    background:transparent;
+    font-family:'IBM Plex Sans Thai', sans-serif;
+    font-size:12.5px;
+    font-weight:600;
+    padding:9px 6px;
+    border-radius:8px;
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .formula-toggle button.active{
+    background:var(--leaf-deep);
+    color:var(--paper);
+  }
+  .formula-note{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    background:rgba(181,83,44,0.07);
+    border-radius:8px;
+    padding:8px 10px;
+    line-height:1.6;
+  }
+  .multiplier-field{
+    margin-top:10px;
+  }
+
+  /* ===== Result hero ===== */
+  .result-hero{
+    background:linear-gradient(165deg, var(--leaf-deep) 0%, #16291E 100%);
+    border-radius:18px;
+    padding:24px 20px 22px;
+    margin-bottom:16px;
+    position:relative;
+    overflow:hidden;
+  }
+  .result-hero::after{
+    content:'';
+    position:absolute;
+    right:-30px; bottom:-40px;
+    width:160px; height:160px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(127,168,92,0.35), transparent 70%);
+  }
+  .result-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:#B7CDB0;
+  }
+  .result-number{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size:64px;
+    line-height:1;
+    color:var(--paper);
+    margin:6px 0 2px;
+    letter-spacing:-0.02em;
+    position:relative;
+    z-index:1;
+  }
+  .result-number span{
+    font-size:22px;
+    font-weight:500;
+    color:#B7CDB0;
+    margin-left:6px;
+  }
+  .result-meta{
+    font-size:12.5px;
+    color:#A9C4A0;
+    position:relative;
+    z-index:1;
+    line-height:1.6;
+  }
+
+  /* ===== Counter ===== */
+  .counter-card{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:22px 18px 20px;
+    text-align:center;
+  }
+  .counter-title{
+    font-family:'Fraunces', serif;
+    font-size:17px;
+    font-weight:600;
+    color:var(--bark-brown);
+    margin-bottom:4px;
+  }
+  .counter-sub{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-bottom:18px;
+  }
+  .counter-display{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:72px;
+    font-weight:600;
+    color:var(--clay-deep);
+    line-height:1;
+    margin:6px 0 4px;
+    transition:transform .1s ease;
+  }
+  .counter-display.bump{transform:scale(1.08);}
+  .counter-progress{
+    font-size:13px;
+    color:var(--ink-soft);
+    margin-bottom:18px;
+  }
+  .counter-progress b{color:var(--leaf-deep);}
+  .progress-track{
+    height:8px;
+    border-radius:6px;
+    background:#E7DEC6;
+    overflow:hidden;
+    margin-bottom:20px;
+  }
+  .progress-fill{
+    height:100%;
+    background:linear-gradient(90deg, var(--leaf-mid), var(--leaf-bright));
+    border-radius:6px;
+    transition:width .25s ease;
+    width:0%;
+  }
+  .counter-buttons{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:16px;
+  }
+  .count-btn{
+    width:64px; height:64px;
+    border-radius:50%;
+    border:none;
+    font-size:30px;
+    font-weight:600;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:transform .1s ease;
+    box-shadow:0 6px 14px -8px var(--shadow);
+  }
+  .count-btn:active{transform:scale(0.92);}
+  .count-minus{
+    background:#fff;
+    border:2px solid var(--clay);
+    color:var(--clay);
+  }
+  .count-plus{
+    background:var(--leaf-deep);
+    color:var(--paper);
+    width:80px; height:80px;
+    font-size:38px;
+  }
+  .count-reset{
+    background:transparent;
+    color:var(--ink-soft);
+    font-size:12px;
+    border:none;
+    margin-top:16px;
+    cursor:pointer;
+    text-decoration:underline;
+    text-decoration-color:var(--line);
+  }
+
+  /* ===== Footer note ===== */
+  .footnote{
+    text-align:center;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    margin-top:24px;
+    line-height:1.7;
+    padding:0 20px;
+  }
+  .footnote a{color:var(--leaf-deep);}
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <svg class="tap-line" viewBox="0 0 46 64" fill="none">
+    <path d="M4 4 L23 30 L4 56" stroke="#8C3D1F" stroke-width="2" stroke-linecap="round"/>
+    <path d="M42 4 L23 30 L42 56" stroke="#3C6B47" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+  </svg>
+  <div class="eyebrow">สวนยางพารา · เครื่องมือวางแผน</div>
+  <h1>นับต้นยาง</h1>
+  <p class="sub">วาดแปลง กรอกระยะปลูก แล้วให้ระบบคำนวณจำนวนต้นยางที่ควรได้ — พร้อมเคาน์เตอร์นับต้นจริงหน้าแปลง</p>
+</header>
+
+<div class="wrap">
+
+  <!-- ===== MAP CARD ===== -->
+  <div class="card">
+    <div class="card-head">
+      <span class="card-title">1. ระบุพิกัดแปลง</span>
+      <span class="card-tag">GOOGLE MAPS</span>
+    </div>
+
+    <div id="map">
+      <div style="display:flex; align-items:center; justify-content:center; height:100%; color:#9C9377; font-size:13px; text-align:center; padding:0 30px;">
+        กำลังโหลดแผนที่...
+      </div>
+    </div>
+    <p class="helper-text" id="mapError" style="display:none; color:#B5532C;"></p>
+
+    <div class="map-toolbar">
+      <button class="btn btn-clay btn-sm" id="drawBtn" disabled>✎ วาดขอบแปลง</button>
+      <button class="btn btn-ghost btn-sm" id="locateBtn" disabled>📍 ตำแหน่งของฉัน</button>
+      <button class="btn btn-ghost btn-sm" id="clearDrawBtn" disabled>ล้างแปลง</button>
+    </div>
+    <p class="helper-text" id="toolbarHint">ปุ่มด้านบนจะกดได้ทันทีที่แผนที่โหลดสำเร็จ</p>
+
+    <div class="area-readout" id="areaReadout" style="display:none;"></div>
+    <p class="helper-text" id="drawHelper" style="display:none;">แตะบนแผนที่เพื่อวางจุดขอบแปลง วาดให้ครบขั้นต่ำ 3 จุด แล้วแตะจุดแรกซ้ำ หรือกดปุ่ม "✕ จบการวาด" เพื่อปิดรูป ระบบจะคำนวณขนาดเป็นไร่ให้อัตโนมัติ (1 ไร่ = 1,600 ตร.ม.)</p>
+  </div>
+
+  <!-- ===== CALCULATION CARD ===== -->
+  <div class="card">
+    <div class="card-head">
+      <span class="card-title">2. คำนวณจำนวนต้น</span>
+      <span class="card-tag">สูตร</span>
+    </div>
+
+    <div class="field">
+      <label>ขนาดแปลง <span class="unit">ไร่</span></label>
+      <input type="number" id="plotSize" placeholder="เช่น 10" min="0" step="0.01" inputmode="decimal">
+    </div>
+
+    <div class="grid-2">
+      <div class="field">
+        <label>ระยะระหว่างแถว <span class="unit">เมตร</span></label>
+        <input type="number" id="rowSpacing" placeholder="เช่น 3" min="0" step="0.1" inputmode="decimal">
+      </div>
+      <div class="field">
+        <label>ระยะระหว่างต้น <span class="unit">เมตร</span></label>
+        <input type="number" id="treeSpacing" placeholder="เช่น 3" min="0" step="0.1" inputmode="decimal">
+      </div>
+    </div>
+
+    <div class="formula-toggle">
+      <button class="formula-btn active" data-formula="standard">สูตรมาตรฐาน</button>
+      <button class="formula-btn" data-formula="custom">สูตรกำหนดเอง</button>
+    </div>
+
+    <div id="formulaNoteStandard" class="formula-note">
+      จำนวนต้น = ขนาดแปลง(ไร่) × 1,600 ÷ (ระยะแถว × ระยะต้น)<br>
+      ใช้พื้นที่จริงของ 1 ไร่ (1,600 ตร.ม.) หารด้วยพื้นที่ที่ต้นยาง 1 ต้นใช้ — เป็นสูตรที่ใช้กันทั่วไปในสวนยางพารา
+    </div>
+
+    <div id="formulaNoteCustom" class="formula-note" style="display:none;">
+      จำนวนต้น = (ระยะแถว × ระยะต้น) × ขนาดแปลง × ตัวคูณ<br>
+      สูตรกำหนดเองตามที่ระบุ — ปรับ "ตัวคูณ" ได้เอง (ค่าเริ่มต้น 75 ตามที่ระบุว่า 1 ไร่ ≈ 75 ต้น)
+      <div class="multiplier-field">
+        <label style="display:block; font-size:12px; font-weight:600; color:var(--bark-brown); margin-bottom:6px;">ตัวคูณ</label>
+        <input type="number" id="customMultiplier" value="75" step="0.1" inputmode="decimal">
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== RESULT HERO ===== -->
+  <div class="result-hero">
+    <div class="result-label">จำนวนต้นยางที่คำนวณได้</div>
+    <div class="result-number" id="resultNumber">—<span>ต้น</span></div>
+    <div class="result-meta" id="resultMeta">กรอกข้อมูลด้านบนให้ครบเพื่อดูผลคำนวณ</div>
+  </div>
+
+  <!-- ===== COUNTER ===== -->
+  <div class="counter-card">
+    <div class="counter-title">3. เคาน์เตอร์นับต้นจริง</div>
+    <div class="counter-sub">นับต้นยางหน้าแปลงจริง แล้วเทียบกับยอดที่คำนวณไว้</div>
+
+    <div class="counter-display" id="counterDisplay">0</div>
+    <div class="counter-progress" id="counterProgress">ยังไม่มีค่าคำนวณให้เทียบ</div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+
+    <div class="counter-buttons">
+      <button class="count-btn count-minus" id="minusBtn">−</button>
+      <button class="count-btn count-plus" id="plusBtn">+</button>
+    </div>
+    <button class="count-reset" id="resetCountBtn">รีเซ็ตตัวนับเป็น 0</button>
+  </div>
+
+  <p class="footnote">
+    พื้นฐาน: 1 ไร่ = 1,600 ตารางเมตร · ผลคำนวณเป็นค่าประมาณสำหรับวางแผน ระยะปลูกจริงในแปลงอาจคลาดเคลื่อนได้<br>
+    แผนที่ขับเคลื่อนโดย Google Maps Platform
+  </p>
+</div>
+
+<script>
+// ===================== STATE =====================
+let map, currentPolygon;
+let drawVertices = [];
+let vertexMarkers = [];
+let isDrawingMode = false;
+let activeFormula = 'standard';
+let counterValue = 0;
+
+// ===================== FORMULA TOGGLE =====================
+const formulaBtns = document.querySelectorAll('.formula-btn');
+const noteStandard = document.getElementById('formulaNoteStandard');
+const noteCustom = document.getElementById('formulaNoteCustom');
+
+formulaBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    formulaBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFormula = btn.dataset.formula;
+    noteStandard.style.display = activeFormula === 'standard' ? 'block' : 'none';
+    noteCustom.style.display = activeFormula === 'custom' ? 'block' : 'none';
+    calculate();
+  });
+});
+
+// ===================== CALCULATION =====================
+const plotSizeInput = document.getElementById('plotSize');
+const rowSpacingInput = document.getElementById('rowSpacing');
+const treeSpacingInput = document.getElementById('treeSpacing');
+const customMultiplierInput = document.getElementById('customMultiplier');
+const resultNumber = document.getElementById('resultNumber');
+const resultMeta = document.getElementById('resultMeta');
+const counterProgress = document.getElementById('counterProgress');
+const progressFill = document.getElementById('progressFill');
+
+let calculatedTotal = null;
+
+function calculate(){
+  const plot = parseFloat(plotSizeInput.value);
+  const row = parseFloat(rowSpacingInput.value);
+  const tree = parseFloat(treeSpacingInput.value);
+
+  if(!plot || !row || !tree || plot <= 0 || row <= 0 || tree <= 0){
+    resultNumber.innerHTML = '—<span>ต้น</span>';
+    resultMeta.textContent = 'กรอกข้อมูลด้านบนให้ครบเพื่อดูผลคำนวณ';
+    calculatedTotal = null;
+    updateCounterProgress();
+    return;
+  }
+
+  let total;
+  let metaText;
+
+  if(activeFormula === 'standard'){
+    total = (plot * 1600) / (row * tree);
+    metaText = `${plot} ไร่ × 1,600 ÷ (${row}×${tree} ม.) · เฉลี่ย ${Math.round(total/plot)} ต้น/ไร่`;
+  } else {
+    const multiplier = parseFloat(customMultiplierInput.value) || 0;
+    total = (row * tree) * plot * multiplier;
+    metaText = `(${row}×${tree}) × ${plot} ไร่ × ${multiplier}`;
+  }
+
+  total = Math.round(total);
+  calculatedTotal = total;
+  resultNumber.innerHTML = `${total.toLocaleString('th-TH')}<span>ต้น</span>`;
+  resultMeta.textContent = metaText;
+  updateCounterProgress();
+}
+
+[plotSizeInput, rowSpacingInput, treeSpacingInput, customMultiplierInput].forEach(el => {
+  el.addEventListener('input', calculate);
+});
+
+// ===================== COUNTER =====================
+const counterDisplay = document.getElementById('counterDisplay');
+const plusBtn = document.getElementById('plusBtn');
+const minusBtn = document.getElementById('minusBtn');
+const resetCountBtn = document.getElementById('resetCountBtn');
+
+function renderCounter(bump){
+  counterDisplay.textContent = counterValue.toLocaleString('th-TH');
+  if(bump){
+    counterDisplay.classList.add('bump');
+    setTimeout(()=>counterDisplay.classList.remove('bump'), 100);
+  }
+  updateCounterProgress();
+}
+
+function updateCounterProgress(){
+  if(calculatedTotal === null || calculatedTotal === 0){
+    counterProgress.innerHTML = `นับไปแล้ว <b>${counterValue.toLocaleString('th-TH')}</b> ต้น — ยังไม่มีค่าคำนวณให้เทียบ`;
+    progressFill.style.width = '0%';
+    return;
+  }
+  const pct = Math.min(100, (counterValue / calculatedTotal) * 100);
+  const diff = counterValue - calculatedTotal;
+  let diffText;
+  if(diff === 0) diffText = 'ตรงกับที่คำนวณไว้พอดี';
+  else if(diff > 0) diffText = `เกินจากที่คำนวณไว้ ${diff.toLocaleString('th-TH')} ต้น`;
+  else diffText = `ยังขาดอีก ${Math.abs(diff).toLocaleString('th-TH')} ต้น`;
+
+  counterProgress.innerHTML = `นับไปแล้ว <b>${counterValue.toLocaleString('th-TH')}</b> / ${calculatedTotal.toLocaleString('th-TH')} ต้น · ${diffText}`;
+  progressFill.style.width = pct + '%';
+}
+
+plusBtn.addEventListener('click', () => { counterValue++; renderCounter(true); });
+minusBtn.addEventListener('click', () => { counterValue = Math.max(0, counterValue - 1); renderCounter(true); });
+resetCountBtn.addEventListener('click', () => {
+  if(counterValue === 0) return;
+  counterValue = 0;
+  renderCounter(false);
+});
+
+renderCounter(false);
+
+// ===================== GOOGLE MAPS =====================
+// API key ฝังไว้ในไฟล์นี้ตามที่ขอ — หากนำไฟล์นี้ไปเผยแพร่ต่อ แนะนำให้ตั้งค่า
+// HTTP referrer restriction ของ key นี้ใน Google Cloud Console เพื่อความปลอดภัย
+const GOOGLE_MAPS_API_KEY = 'AIzaSyB_lPs12myrfEKbPD0o6-djFZgV7uahCaM';
+
+const mapDiv = document.getElementById('map');
+const drawBtn = document.getElementById('drawBtn');
+const locateBtn = document.getElementById('locateBtn');
+const clearDrawBtn = document.getElementById('clearDrawBtn');
+const areaReadout = document.getElementById('areaReadout');
+const drawHelper = document.getElementById('drawHelper');
+const mapErrorEl = document.getElementById('mapError');
+const toolbarHint = document.getElementById('toolbarHint');
+
+const RAI_IN_SQM = 1600;
+
+function showMapError(msg){
+  mapErrorEl.style.display = 'block';
+  mapErrorEl.textContent = msg;
+  mapDiv.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#B5532C;font-size:13px;text-align:center;padding:0 24px;">โหลดแผนที่ไม่สำเร็จ</div>`;
+}
+
+// callback ต้องอยู่ใน global scope (window) เพราะ Google Maps script เรียกผ่านชื่อนี้ตรงๆ
+window.initRubberMap = function(){
+  try {
+    mapDiv.innerHTML = '';
+
+    const defaultCenter = { lat: 7.8804, lng: 98.3923 }; // ภาคใต้ของไทย แถบสวนยาง
+
+    map = new google.maps.Map(mapDiv, {
+      center: defaultCenter,
+      zoom: 16,
+      mapTypeId: 'satellite',
+      streetViewControl: false,
+      fullscreenControl: false,
+      mapTypeControl: true,
+      mapTypeControlOptions: {
+        style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+        position: google.maps.ControlPosition.TOP_RIGHT
+      }
+    });
+
+    // วาดขอบแปลงเองด้วย Polygon + click listener
+    // (ไม่ใช้ google.maps.drawing.DrawingManager เพราะ Google เลิกใช้ฟีเจอร์นี้แล้วตั้งแต่เวอร์ชัน 3.65)
+    drawVertices = [];
+    vertexMarkers = [];
+
+    map.addListener('click', (e) => {
+      if(!isDrawingMode) return;
+      addVertex(e.latLng);
+    });
+
+    // เปิดใช้งานปุ่มทั้งหมดทันทีที่แผนที่พร้อม
+    drawBtn.disabled = false;
+    locateBtn.disabled = false;
+    clearDrawBtn.disabled = true;
+    toolbarHint.style.display = 'none';
+  } catch(err){
+    showMapError('เกิดข้อผิดพลาดขณะสร้างแผนที่: ' + err.message);
+  }
+};
+
+function addVertex(latLng){
+  drawVertices.push(latLng);
+
+  const marker = new google.maps.Marker({
+    position: latLng,
+    map: map,
+    icon: {
+      path: google.maps.SymbolPath.CIRCLE,
+      scale: 6,
+      fillColor: '#B5532C',
+      fillOpacity: 1,
+      strokeColor: '#fff',
+      strokeWeight: 2
+    }
+  });
+  vertexMarkers.push(marker);
+
+  redrawPolygon();
+
+  // แตะจุดแรกซ้ำ (อย่างน้อย 3 จุดขึ้นไป) เพื่อปิดรูปและจบการวาด
+  if(drawVertices.length > 2){
+    const first = drawVertices[0];
+    const distFromFirst = google.maps.geometry.spherical.computeDistanceBetween(latLng, first);
+    if(distFromFirst < 12){ // เมตร — ระยะที่ถือว่า "แตะจุดแรกซ้ำ"
+      drawVertices.pop();
+      vertexMarkers.pop().setMap(null);
+      finishDrawing();
+    }
+  }
+}
+
+function redrawPolygon(){
+  if(currentPolygon){ currentPolygon.setMap(null); }
+  if(drawVertices.length < 2) return;
+
+  currentPolygon = new google.maps.Polygon({
+    paths: drawVertices,
+    fillColor: '#B5532C',
+    fillOpacity: 0.25,
+    strokeColor: '#3C6B47',
+    strokeWeight: 3,
+    editable: false,
+    draggable: false,
+    map: map
+  });
+}
+
+function finishDrawing(){
+  isDrawingMode = false;
+  drawBtn.textContent = '✎ วาดขอบแปลง';
+  drawHelper.style.display = 'none';
+  clearDrawBtn.disabled = false;
+
+  vertexMarkers.forEach(m => m.setMap(null));
+  vertexMarkers = [];
+
+  if(drawVertices.length >= 3){
+    redrawPolygon();
+    currentPolygon.setEditable(true);
+    currentPolygon.setOptions({fillOpacity: 0.25});
+
+    google.maps.event.addListener(currentPolygon.getPath(), 'set_at', updateAreaFromPolygon);
+    google.maps.event.addListener(currentPolygon.getPath(), 'insert_at', updateAreaFromPolygon);
+
+    updateAreaFromPolygon();
+  }
+}
+
+function updateAreaFromPolygon(){
+  if(!currentPolygon) return;
+  const path = currentPolygon.getPath();
+  const areaSqm = google.maps.geometry.spherical.computeArea(path);
+  const areaRai = areaSqm / RAI_IN_SQM;
+
+  areaReadout.style.display = 'block';
+  areaReadout.innerHTML = `พื้นที่แปลง: ${areaSqm.toLocaleString('th-TH', {maximumFractionDigits:0})} ตร.ม. ≈ <b>${areaRai.toFixed(2)} ไร่</b> · <button id="useAreaBtn" style="border:none;background:var(--leaf-deep);color:#fff;padding:4px 10px;border-radius:8px;font-size:12px;cursor:pointer;margin-left:4px;">ใช้ค่านี้</button>`;
+
+  document.getElementById('useAreaBtn').addEventListener('click', () => {
+    plotSizeInput.value = areaRai.toFixed(2);
+    calculate();
+  });
+}
+
+drawBtn.addEventListener('click', () => {
+  if(!map){ return; }
+  if(!isDrawingMode){
+    // เริ่มวาดใหม่: ล้างของเก่าก่อน
+    if(currentPolygon){ currentPolygon.setMap(null); currentPolygon = null; }
+    vertexMarkers.forEach(m => m.setMap(null));
+    vertexMarkers = [];
+    drawVertices = [];
+    areaReadout.style.display = 'none';
+
+    isDrawingMode = true;
+    drawBtn.textContent = '✕ จบการวาด';
+    drawHelper.style.display = 'block';
+  } else {
+    // กดซ้ำระหว่างวาด: ถ้ามีจุดครบ 3 จุดขึ้นไปแล้ว ให้ปิดรูปและจบการวาดทันที
+    // ถ้ายังไม่ครบ ให้ยกเลิกการวาดทั้งหมด
+    if(drawVertices.length >= 3){
+      finishDrawing();
+    } else {
+      isDrawingMode = false;
+      drawBtn.textContent = '✎ วาดขอบแปลง';
+      drawHelper.style.display = 'none';
+      vertexMarkers.forEach(m => m.setMap(null));
+      vertexMarkers = [];
+      drawVertices = [];
+      if(currentPolygon){ currentPolygon.setMap(null); currentPolygon = null; }
+    }
+  }
+});
+
+clearDrawBtn.addEventListener('click', () => {
+  if(currentPolygon){
+    currentPolygon.setMap(null);
+    currentPolygon = null;
+  }
+  vertexMarkers.forEach(m => m.setMap(null));
+  vertexMarkers = [];
+  drawVertices = [];
+  areaReadout.style.display = 'none';
+  clearDrawBtn.disabled = true;
+});
+
+locateBtn.addEventListener('click', () => {
+  if(!map){ return; }
+  if(!navigator.geolocation){
+    alert('เบราว์เซอร์นี้ไม่รองรับการระบุตำแหน่ง');
+    return;
+  }
+  if(!window.isSecureContext){
+    alert('การระบุตำแหน่งต้องเปิดผ่าน HTTPS หรือ localhost เบราว์เซอร์จะบล็อกการขอตำแหน่งบน HTTP ธรรมดาหรือไฟล์ที่เปิดตรงจากดิสก์ในบางเบราว์เซอร์');
+    return;
+  }
+  locateBtn.textContent = '📍 กำลังค้นหา...';
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      map.setCenter(loc);
+      map.setZoom(18);
+      new google.maps.Marker({
+        position: loc,
+        map: map,
+        title: 'ตำแหน่งของฉัน'
+      });
+      locateBtn.textContent = '📍 ตำแหน่งของฉัน';
+    },
+    (err) => {
+      alert('ไม่สามารถระบุตำแหน่งได้: ' + err.message);
+      locateBtn.textContent = '📍 ตำแหน่งของฉัน';
+    }
+  );
+});
+
+// โหลด Google Maps script พร้อม API key ที่ฝังไว้
+(function loadGoogleMapsScript(){
+  window.gm_authFailure = function(){
+    showMapError('API key ไม่ถูกต้อง หรือถูกจำกัดการใช้งาน (authentication failure) — ตรวจสอบ key และการเปิดใช้ Maps JavaScript API / Drawing Library / Geometry Library ใน Google Cloud Console');
+  };
+
+  const script = document.createElement('script');
+  script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(GOOGLE_MAPS_API_KEY)}&libraries=geometry&callback=initRubberMap`;
+  script.async = true;
+  script.defer = true;
+  script.onerror = () => {
+    showMapError('โหลดสคริปต์ Google Maps ไม่สำเร็จ — ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต');
+  };
+  document.head.appendChild(script);
+})();
+</script>
+
+</body>
+</html>
