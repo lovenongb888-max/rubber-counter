@@ -4,6 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>นับต้นยาง | ตัวช่วยวางแผนสวนยางพารา</title>
+
+<!-- PWA: ทำให้เพิ่มลงหน้าจอหลักและเปิดแบบเต็มจอเหมือนแอพได้ -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1F3D2B">
+<meta name="mobile-web-app-capable" content="yes">
+
+<!-- iOS (Safari ไม่อ่าน manifest.json เต็มรูปแบบ ต้องใส่ tag เฉพาะเพิ่ม) -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="นับต้นยาง">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
 
@@ -874,6 +887,15 @@ locateBtn.addEventListener('click', () => {
   };
   document.head.appendChild(script);
 })();
+
+// ===================== PWA: ลงทะเบียน Service Worker =====================
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch((err) => {
+      console.warn('ลงทะเบียน service worker ไม่สำเร็จ:', err);
+    });
+  });
+}
 </script>
 
 </body>
